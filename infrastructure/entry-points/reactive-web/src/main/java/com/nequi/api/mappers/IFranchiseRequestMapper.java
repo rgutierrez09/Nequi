@@ -17,7 +17,7 @@ public interface IFranchiseRequestMapper {
         List<Branch> branches = mapBranchesIds(franchiseCreateRequestDTO.getBranchIds());
         return new Franchise(
                 null,
-                franchiseCreateRequestDTO.getFranchiseName(),
+                franchiseCreateRequestDTO.getName(),
                 branches
         );
 

@@ -16,7 +16,7 @@ public class Constants {
     public static final String PATH_DELETE_PATTERN = "/{id}";
     public static final String PATH_DELETE_VARIABLE = "id";
     public static final String PATH_UPDATE_PATTERN = "/product";
-    public static final String PATH_GET_BRANCH_PATTERN = "/productinfo/{id}";
+    public static final String PATH_GET_BRANCH_PATTERN = "/{branchId}/products";
     public static final String PATH_GET_PATTERN = "branchId";
     public static final String ID = "id";
     public static final int STATUS_CREATED = 201;

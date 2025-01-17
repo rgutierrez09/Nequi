@@ -1,14 +1,12 @@
 package com.nequi.api.mappers;
 
 import com.nequi.api.dto.BranchProductCreateRequestDto;
-import com.nequi.api.dto.BranchRequestDTO;
 import com.nequi.models.Branch;
 import com.nequi.models.Product;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring",

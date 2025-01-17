@@ -35,44 +35,48 @@ public class FranchiseHandlerImpl implements IFranchiseHandler {
     public Mono<ServerResponse> createFranchise(ServerRequest request) {
         return request.bodyToMono(FranchiseCreateRequestDTO.class)
                 .switchIfEmpty(Mono.error(new BusinessException(BusinessErrorMessage.EMPTY_REQUEST_BODY)))
-                .flatMap(franchiseRequest -> {
-                    Franchise franchise = franchiseRequestMapper.toDomain(franchiseRequest);
-                    List<Integer> branchIds = franchiseRequest.getBranchIds();
+                .flatMap(this::processFranchiseCreation)
+                .onErrorResume(BusinessException.class, this::handleBusinessError)
+                .onErrorResume(Exception.class, this::handleUnexpectedError);
+    }
 
-                    return franchiseServicePort.createFranchise(franchise)
-                            .flatMap(savedFranchise -> {
-                                FranchiseBranchRequestDTO franchiseBranchRequestDto = new FranchiseBranchRequestDTO();
-                                franchiseBranchRequestDto.setFranchiseId(savedFranchise.getId());
-                                franchiseBranchRequestDto.setBranchIds(branchIds);
+    private Mono<ServerResponse> processFranchiseCreation(FranchiseCreateRequestDTO franchiseRequest) {
+        Franchise franchise = franchiseRequestMapper.toDomain(franchiseRequest);
+        List<Integer> branchIds = franchiseRequest.getBranchIds();
 
-                                return associateBranchesWithFranchise(franchiseBranchRequestDto)
-                                        .then(ServerResponse.status(HttpStatus.CREATED)
-                                                .bodyValue(new FranchiseCreatedResponseDTO(
-                                                        savedFranchise.getName()
-                                                )))
-                                        .onErrorResume(associationError -> {
-                                            log.error("Error associating branches with franchise: {}", associationError.getMessage());
-                                            return franchiseServicePort.deleteFranchiseById(savedFranchise.getId())
-                                                    .then(Mono.error(new BusinessException(BusinessErrorMessage.ASSOCIATE_FRANCHISE_BRANCH_ERROR)));
-                                        });
-                            });
-                })
-                .onErrorResume(BusinessException.class, e -> {
-                    log.error("Business error creating franchise: {}", e.getMessage());
-                    return ServerResponse.status(HttpStatus.BAD_REQUEST).bodyValue(e.getMessage());
-                })
-                .onErrorResume(Exception.class, e -> {
-                    log.error("Unexpected error creating franchise: {}", e.getMessage());
-                    return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .bodyValue("Error interno del servidor");
-                });
+        return franchiseServicePort.createFranchise(franchise)
+                .flatMap(savedFranchise -> associateBranchesAndRespond(savedFranchise, branchIds))
+                .onErrorResume(associationError -> rollbackOnError(franchise.getId(), associationError));
+    }
+
+    private Mono<ServerResponse> associateBranchesAndRespond(Franchise savedFranchise, List<Integer> branchIds) {
+        FranchiseBranchRequestDTO franchiseBranchRequestDto = new FranchiseBranchRequestDTO(savedFranchise.getId(), savedFranchise.getName(), branchIds);
+
+        return associateBranchesWithFranchise(franchiseBranchRequestDto)
+                .then(ServerResponse.status(HttpStatus.CREATED)
+                        .bodyValue(new FranchiseCreatedResponseDTO(savedFranchise.getName())));
+    }
+
+    private Mono<ServerResponse> rollbackOnError(Integer franchiseId, Throwable associationError) {
+        log.error("Error associating branches with franchise: {}", associationError.getMessage());
+        return franchiseServicePort.deleteFranchiseById(franchiseId)
+                .then(Mono.error(new BusinessException(BusinessErrorMessage.ASSOCIATE_FRANCHISE_BRANCH_ERROR)));
     }
 
     private Mono<Void> associateBranchesWithFranchise(FranchiseBranchRequestDTO franchiseBranchRequestDto) {
-        List<FranchiseBranch> franchiseBranches = franchiseBranchRequestMapper.toDomain(franchiseBranchRequestDto);
-        return Flux.fromIterable(franchiseBranches)
+        return Flux.fromIterable(franchiseBranchRequestMapper.toDomain(franchiseBranchRequestDto))
                 .flatMap(franchiseBranchServicePort::associateBranchToFranchise)
                 .then();
     }
-}
 
+    private Mono<ServerResponse> handleBusinessError(BusinessException e) {
+        log.error("Business error creating franchise: {}", e.getMessage());
+        return ServerResponse.status(HttpStatus.BAD_REQUEST).bodyValue(e.getMessage());
+    }
+
+    private Mono<ServerResponse> handleUnexpectedError(Exception e) {
+        log.error("Unexpected error creating franchise: {}", e.getMessage());
+        return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .bodyValue("Error interno del servidor");
+    }
+}

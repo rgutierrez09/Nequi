@@ -22,4 +22,6 @@ public class RouterRestBranch {
                         .andRoute(GET(PATH_GET_BRANCH_PATTERN), handler::getBranchProductsByBranchId)
         );
     }
+
+
 }

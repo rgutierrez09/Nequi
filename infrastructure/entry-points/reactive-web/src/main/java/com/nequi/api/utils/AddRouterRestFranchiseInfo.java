@@ -1,6 +1,6 @@
 package com.nequi.api.utils;
 
-import com.nequi.api.dto.BranchRequestDTO;
+import com.nequi.api.dto.FranchiseRequestDTO;
 import com.nequi.models.Product;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -33,7 +33,7 @@ import java.lang.annotation.Target;
                         @RequestBody(
                                 description = "Franchise to add",
                                 required = true,
-                                content = @Content(schema = @Schema(implementation = BranchRequestDTO.class,
+                                content = @Content(schema = @Schema(implementation = FranchiseRequestDTO.class,
                                         requiredProperties = {"name", "products"}))),
                         responses = {
                                 @ApiResponse(

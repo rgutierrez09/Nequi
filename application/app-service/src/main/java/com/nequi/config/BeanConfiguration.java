@@ -1,5 +1,7 @@
 package com.nequi.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.nequi.ports.inbound.BranchServicePort;
 import com.nequi.ports.inbound.FranchiseBranchServicePort;
 import com.nequi.ports.inbound.FranchiseServicePort;
@@ -38,6 +40,8 @@ import com.nequi.validations.ProductBusinessValidations;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 @Configuration
 @RequiredArgsConstructor
@@ -112,5 +116,14 @@ public class BeanConfiguration {
     @Bean
     public FranchiseBranchServicePort franchiseBranchServicePort(FranchiseBranchRepositoryPort franchiseBranchPersistencePort, FranchiseBranchBusinessValidations franchiseBranchBusinessValidations) {
         return new FranchiseBranchUseCase(franchiseBranchPersistencePort, franchiseBranchBusinessValidations);
+    }
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        SimpleModule module = new SimpleModule();
+        module.addAbstractTypeMapping(MultiValueMap.class, LinkedMultiValueMap.class);
+        mapper.registerModule(module);
+        return mapper;
     }
 }

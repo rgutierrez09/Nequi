@@ -10,6 +10,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FranchiseCreateRequestDTO {
-    private String franchiseName;
+    private String name;
     private List<Integer> branchIds;
 }
