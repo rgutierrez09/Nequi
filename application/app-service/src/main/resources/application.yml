@@ -1,0 +1,43 @@
+server:
+  port: 8080
+
+spring:
+  sql:
+    init:
+      mode: embedded
+      schema-locations: classpath:schema.sql
+  application:
+    name: "franchise"
+  r2dbc:
+    url: r2dbc:mysql://localhost:3306/franchise_db
+    username: root
+    password: root
+  devtools:
+    add-properties: true
+  profiles:
+    include: null
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health"
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: INFO
+    org.springframework.http: INFO
+    reactor.core.publisher.Operators: INFO
+    io.asyncer.r2dbc.mysql.client.ReactorNettyClient: OFF
+    io.r2dbc.mysql: OFF
